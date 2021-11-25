@@ -1,6 +1,7 @@
 package com.example.Proyecto.controller;
 
 import com.example.Proyecto.configuration.ClienteException;
+import com.example.Proyecto.entity.Autenticacion;
 import com.example.Proyecto.entity.Cliente;
 import com.example.Proyecto.entity.Cuenta;
 import com.example.Proyecto.service.ClienteService;
@@ -37,6 +38,7 @@ public class ClienteController {
     public ResponseEntity<String> logginCliente(@RequestBody Cliente cliente) throws ClienteException {
         clienteService.loginCliente(cliente);
         //System.out.println("Cliente añadido");
+        clienteService.login(cliente);
         return ResponseEntity.ok("Bienvenido");
     }
 
@@ -59,5 +61,10 @@ public class ClienteController {
         }else{
             return ResponseEntity.ok("Finalizada");
         }
+    }
+
+    @GetMapping("islogged/{usuario}")
+    public boolean islogged(@PathVariable String usuario){
+        return clienteService.islogged(usuario);
     }
 }

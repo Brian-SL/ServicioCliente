@@ -1,8 +1,10 @@
 package com.example.Proyecto.service;
 
 import com.example.Proyecto.configuration.ClienteException;
+import com.example.Proyecto.entity.Autenticacion;
 import com.example.Proyecto.entity.Cliente;
 import com.example.Proyecto.entity.Cuenta;
+import com.example.Proyecto.repository.AutenticacionDao;
 import com.example.Proyecto.repository.ClienteRepository;
 import com.example.Proyecto.repository.ClienteRepositoryDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class ClienteService {
 
     @Autowired
     ClienteRepositoryDao clienteRepositoryDao;
+
+    @Autowired
+    AutenticacionDao autenticacionDao;
 
     private int intentos=0;
 
@@ -135,5 +140,16 @@ public class ClienteService {
             throw new ClienteException("Fallida");
         }
     }
+
+    public void login(Cliente cliente){
+        Autenticacion autenticacion= new Autenticacion(cliente.getUsuario(), cliente.getContraseña());
+        autenticacionDao.save(autenticacion);
+    }
+
+    public boolean islogged(String user){
+        Optional<Autenticacion> login= autenticacionDao.findById(user);
+        return login.isPresent() ? true:false;
+    }
+
 
 }
