@@ -32,4 +32,16 @@ public class ClienteRepository {
     public Optional<Cliente> buscarClientePorUsuario(String usuario){
         return clienteRepositoryDao.buscarClientePorUsuario(usuario);
     }
+
+    public Optional<Cliente> loginCliente(String usuario, String contraseña) {
+        return clienteRepositoryDao.loginCliente(usuario, contraseña);
+    }
+
+    public void bloquearUsuario(String usuario){
+        Optional<Cliente> optionalCliente = buscarClientePorUsuario(usuario);
+        if (optionalCliente.isPresent()){
+            optionalCliente.get().setBloqueado(true);
+            clienteRepositoryDao.save(optionalCliente.get());
+        }
+    }
 }

@@ -11,4 +11,9 @@ public interface ClienteRepositoryDao extends CrudRepository<Cliente, Integer> {
 
     @Query (value = "select * from Clientes where usuario= :usuario", nativeQuery = true)
     public Optional<Cliente> buscarClientePorUsuario(String usuario);
+
+    @Query (value = "select * from Clientes where usuario = :usuario and contraseña = :contraseña", nativeQuery = true)
+    Optional<Cliente> loginCliente(String usuario, String contraseña);
+
+
 }

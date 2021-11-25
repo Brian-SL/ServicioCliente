@@ -37,4 +37,8 @@ public class Cliente {
     @Column(name = "Cliente_Prestamos")
     List<Prestamo> prestamos;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @Column(name = "Cliente_PlazoFijo")
+    private List<PlazoFijo> plazoFijoLista;
+
 }

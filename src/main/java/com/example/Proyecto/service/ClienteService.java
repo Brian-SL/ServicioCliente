@@ -2,7 +2,9 @@ package com.example.Proyecto.service;
 
 import com.example.Proyecto.configuration.ClienteException;
 import com.example.Proyecto.entity.Cliente;
+import com.example.Proyecto.entity.Cuenta;
 import com.example.Proyecto.repository.ClienteRepository;
+import com.example.Proyecto.repository.ClienteRepositoryDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,11 @@ import java.util.Optional;
 public class ClienteService {
     @Autowired
     ClienteRepository clienteRepository;
+
+    @Autowired
+    ClienteRepositoryDao clienteRepositoryDao;
+
+    private int intentos=0;
 
     public void addCliente(Cliente cliente) throws ClienteException {
         Optional<Cliente> optionalCliente = buscarClientePorUsuario(cliente.getUsuario());
@@ -76,4 +83,57 @@ public class ClienteService {
     public Optional<Cliente> buscarClientePorUsuario(String usuario){
         return clienteRepository.buscarClientePorUsuario(usuario);
     }
+
+
+    public Optional<Cliente> loginCliente(Cliente cliente) throws ClienteException {
+        Optional<Cliente> optionalCliente =clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());;
+        if (optionalCliente.isPresent()) {
+            //System.out.println("bloqueado " + optionalCliente.get().isBloqueado());
+            if (optionalCliente.get().isBloqueado()){
+                throw new ClienteException("Usuario bloqueado :(");
+            }else {
+                //Optional<Cliente> optionalCliente2 =clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());
+                intentos=0;
+                //if (op)
+                return clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());
+            }
+        }
+        else {
+            intentos++;
+
+            if (intentos>=3){
+                clienteRepository.bloquearUsuario(cliente.getUsuario());
+                throw new ClienteException("Usuario bloqueado");
+            }
+            throw new ClienteException("Contraseña incorrecta. Intentos: "+ intentos);
+        }
+    }
+
+
+    public Optional<Cliente> addcuenta(String usuario, Cuenta cuenta) {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if(clienteOptional.isPresent()){
+            List<Cuenta> listacuentas=clienteOptional.get().getCuentas();
+            listacuentas.add(cuenta);
+            clienteOptional.get().setCuentas(listacuentas);
+            clienteRepositoryDao.save(clienteOptional.get());
+        }
+
+        return clienteOptional;
+    }
+
+
+    public Optional<Cliente> desbloqueoUsuario(String usuario, String celular) throws ClienteException {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if(clienteOptional.isPresent()){
+
+                clienteOptional.get().setBloqueado(false);
+                clienteRepositoryDao.save(clienteOptional.get());
+                return clienteOptional;
+
+        }else {
+            throw new ClienteException("Fallida");
+        }
+    }
+
 }
