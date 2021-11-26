@@ -44,4 +44,8 @@ public class ClienteRepository {
             clienteRepositoryDao.save(optionalCliente.get());
         }
     }
+
+    public Optional<Cliente> buscarClientePorEmail(String email){
+        return clienteRepositoryDao.buscarClientePorEmail(email);
+    }
 }

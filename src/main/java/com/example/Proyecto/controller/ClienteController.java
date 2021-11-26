@@ -34,11 +34,10 @@ public class ClienteController {
         }
     }
 
-    @GetMapping("/loginCliente")
-    public ResponseEntity<String> logginCliente(@RequestBody Cliente cliente) throws ClienteException {
-        clienteService.loginCliente(cliente);
-        //System.out.println("Cliente añadido");
-        clienteService.login(cliente);
+    @GetMapping("/loginCliente/{usuario}/{contraseña}")
+    public ResponseEntity<String> logginCliente(@PathVariable("usuario") String usuario, @PathVariable("contraseña") String contraseña) throws ClienteException {
+        clienteService.loginCliente(usuario, contraseña);
+        clienteService.login(usuario, contraseña);
         return ResponseEntity.ok("Bienvenido");
     }
 
@@ -66,5 +65,30 @@ public class ClienteController {
     @GetMapping("islogged/{usuario}")
     public boolean islogged(@PathVariable String usuario){
         return clienteService.islogged(usuario);
+    }
+
+
+    @PutMapping("cambiarContraseña/{usuario}/{contraseña}")
+    public ResponseEntity<String> cambiarContraseña( @PathVariable("usuario") String usuario, @PathVariable("contraseña") String contraseña) throws ClienteException {
+        Optional<Cliente> cliente=clienteService.cambiarContraseña(usuario, contraseña);
+        return ResponseEntity.ok("Cambio realizado");
+    }
+
+    @GetMapping("recuperarUsuario/{email}")
+    public ResponseEntity<String> recuperarUsuario( @PathVariable("email") String email) throws ClienteException {
+        Optional<Cliente> cliente=clienteService.recuperarUsuario(email);
+            return ResponseEntity.ok("Usuario: " + cliente.get().getUsuario());
+    }
+
+    @PutMapping("/cambiarCelular/{usuario}/{celular}")
+    public ResponseEntity<String> cambiarCelular( @PathVariable("usuario") String usuario, @PathVariable("celular") String celular) throws ClienteException {
+        Optional<Cliente> cliente=clienteService.cambiarCelular(usuario, celular);
+        return ResponseEntity.ok("Cambio realizado");
+    }
+
+    @PutMapping("/cambiarEmail/{usuario}/{email}")
+    public ResponseEntity<String> cambiarEmail( @PathVariable("usuario") String usuario, @PathVariable("email") String email) throws ClienteException {
+        Optional<Cliente> cliente=clienteService.cambiarEmail(usuario, email);
+        return ResponseEntity.ok("Cambio realizado");
     }
 }

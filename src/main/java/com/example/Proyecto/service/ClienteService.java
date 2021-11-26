@@ -28,6 +28,7 @@ public class ClienteService {
     private int intentos=0;
 
     public void addCliente(Cliente cliente) throws ClienteException {
+        intentos=0;
         Optional<Cliente> optionalCliente = buscarClientePorUsuario(cliente.getUsuario());
         if(optionalCliente.isPresent()){
             //excepcion, el cliente ya está dado de alta
@@ -90,28 +91,32 @@ public class ClienteService {
     }
 
 
-    public Optional<Cliente> loginCliente(Cliente cliente) throws ClienteException {
-        Optional<Cliente> optionalCliente =clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());;
-        if (optionalCliente.isPresent()) {
-            //System.out.println("bloqueado " + optionalCliente.get().isBloqueado());
-            if (optionalCliente.get().isBloqueado()){
+    public Optional<Cliente> loginCliente(String usuario, String contraseña) throws ClienteException {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if (clienteOptional.isPresent()) {
+            if (clienteOptional.get().isBloqueado()){
                 throw new ClienteException("Usuario bloqueado :(");
             }else {
-                //Optional<Cliente> optionalCliente2 =clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());
-                intentos=0;
-                //if (op)
-                return clienteRepository.loginCliente(cliente.getUsuario(), cliente.getContraseña());
-            }
-        }
-        else {
-            intentos++;
+                Optional<Cliente> cliente=clienteRepository.loginCliente(usuario, contraseña);
+                if (cliente.isPresent()){
+                    intentos=0;
+                    return clienteRepository.loginCliente(usuario, contraseña);
+                }else{
+                    intentos++;
 
-            if (intentos>=3){
-                clienteRepository.bloquearUsuario(cliente.getUsuario());
-                throw new ClienteException("Usuario bloqueado");
+                    if (intentos>=3){
+                        clienteRepository.bloquearUsuario(usuario);
+                        throw new ClienteException("Usuario bloqueado");
+                    }
+
+                    throw new ClienteException("Contraseña incorrecta. Intentos: "+ intentos);
+                }
+
             }
-            throw new ClienteException("Contraseña incorrecta. Intentos: "+ intentos);
-        }
+
+        }else{
+                throw new ClienteException("Usuario incorrecto");
+            }
     }
 
 
@@ -129,26 +134,100 @@ public class ClienteService {
 
 
     public Optional<Cliente> desbloqueoUsuario(String usuario, String celular) throws ClienteException {
+        intentos=0;
         Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
         if(clienteOptional.isPresent()){
-
+            if(clienteOptional.get().getCelular().equals(celular)){
                 clienteOptional.get().setBloqueado(false);
                 clienteRepositoryDao.save(clienteOptional.get());
                 return clienteOptional;
+            }else{
+                throw new ClienteException("Fallida");
+            }
+
 
         }else {
             throw new ClienteException("Fallida");
         }
     }
 
-    public void login(Cliente cliente){
-        Autenticacion autenticacion= new Autenticacion(cliente.getUsuario(), cliente.getContraseña());
+    public void login(String usuario, String contraseña){
+        Autenticacion autenticacion= new Autenticacion(usuario, contraseña);
         autenticacionDao.save(autenticacion);
     }
 
     public boolean islogged(String user){
         Optional<Autenticacion> login= autenticacionDao.findById(user);
         return login.isPresent() ? true:false;
+    }
+
+    public Optional<Cliente> cambiarContraseña(String usuario, String contraseña) throws ClienteException {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if(clienteOptional.isPresent()){
+            if (contraseña.length()<6){
+                throw new ClienteException("La longitud de la contraseña debe ser mínimo 6 caracteres");
+            }else{
+                boolean num=false;
+                boolean alfanum=false;
+
+                for (int i=0; i<contraseña.length(); i++){
+                    if(contraseña.charAt(i) >48 && contraseña.charAt(i) <58)
+                        num=true;
+
+                    if(contraseña.charAt(i) >72 && contraseña.charAt(i) <123)
+                        alfanum=true;
+                }
+
+                if (num==true && alfanum==true){
+                    clienteOptional.get().setContraseña(contraseña);
+                    clienteRepositoryDao.save(clienteOptional.get());
+                    return clienteOptional;
+                }else{
+                    throw new ClienteException("La contraseña debe de contener al menos un caracter numérico y un alfanumérico");
+                }
+            }
+        }else{
+            throw new ClienteException("Usuario incorrecto");
+        }
+    }
+
+    public Optional<Cliente> recuperarUsuario( String email) throws ClienteException {
+        Optional<Cliente> clienteOptional= clienteRepository.buscarClientePorEmail(email);
+        if (clienteOptional.isPresent()){
+            return clienteOptional;
+        }else{
+            throw new ClienteException("Email incorrecto");
+        }
+    }
+
+    public Optional<Cliente> cambiarCelular(String usuario, String celular) throws ClienteException {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if(clienteOptional.isPresent()){
+            if (celular.length() !=10){
+                throw new ClienteException("La longitud del número de celular debe ser de 10 caracteres");
+            }else{
+                clienteOptional.get().setCelular(celular);
+                clienteRepositoryDao.save(clienteOptional.get());
+                return clienteOptional;
+            }
+        }else{
+            throw new ClienteException("Usuario incorrecto");
+        }
+    }
+
+    public Optional<Cliente> cambiarEmail(String usuario, String email) throws ClienteException {
+        Optional<Cliente> clienteOptional= buscarClientePorUsuario(usuario);
+        if(clienteOptional.isPresent()){
+            if (email.contains("@")){
+                clienteOptional.get().setEmail(email);
+                clienteRepositoryDao.save(clienteOptional.get());
+                return clienteOptional;
+            }else{
+                throw new ClienteException("El nuevo Email debe contener un @");
+            }
+        }else{
+            throw new ClienteException("Usuario incorrecto");
+        }
     }
 
 
